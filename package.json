@@ -5,9 +5,7 @@
   "scripts": {
     "dev": "electron .",
     "package:win": "yarn build && rm -rf release && electron-builder build --win --x64",
-    "package:mac": "yarn build && rm -rf release && electron-builder build --mac",
-    "release:win": "yarn build && electron-builder build --win -p always",
-    "release:mac": "yarn build && electron-builder build --mac -p always"
+    "package:mac": "yarn build && rm -rf release && electron-builder build --mac"
   },
   "dependencies": {
     "shelljs": "^0.8.3"

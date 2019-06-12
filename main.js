@@ -1,8 +1,11 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, dialog} = require('electron');
+const ipc = require('electron').ipcMain;
+const os = require('os');
+
 
 let mainWindow;
 
-function createWindow () {
+function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 800,
@@ -16,7 +19,7 @@ function createWindow () {
     mainWindow.loadFile('index.html')
 
     // Open the DevTools.
-    // mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
@@ -24,8 +27,24 @@ function createWindow () {
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
         mainWindow = null
+    });
+
+    ipc.on('showOpenDialog', function (event, arg) {
+        dialog.showOpenDialog({
+            title: '选择保存路径',
+            defaultPath: os.homedir(),
+            properties: ['openDirectory', 'createDirectory']
+        }, (filePaths) => {
+            event.sender.send('showOpenDialog-reply', filePaths);
+        });
+    });
+
+    ipc.on('showErrorBox', function (event, arg) {
+        dialog.showErrorBox('提示', arg);
     })
+
 }
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -46,3 +65,4 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
