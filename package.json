@@ -4,8 +4,8 @@
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
-    "package:win": "electron-packager ./ --extra-resource=ffmpeg/ --icon=download.ico",
-    "package:mac": "yarn build && rm -rf dist && electron-builder build --mac"
+    "package:win": "electron-packager ./ --extra-resource=ffmpeg/",
+    "package:mac": "electron-packager ./ --platform=darwin --arch=x64 --icon=app.icns --out=./dist --asar --app-version=1.0.0"
   },
   "build": {
     "appId": "Download",
