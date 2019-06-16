@@ -135,8 +135,7 @@
             数据源：
         </div>
         <div class="item-right">
-            <input type="text" id="source" placeholder="请输入数据源地址"
-                   value="rtmp://localhost:1935/rtmplive/room">
+            <input type="text" id="source" placeholder="请输入数据源地址">
         </div>
     </div>
     <div class="item">
@@ -146,9 +145,9 @@
         <div class="item-right">
             <input type="text" id="download" placeholder="请选择数据存放地址">
         </div>
-        <div class="item-right item-right2">
-            <button class="btn btn-success" id="selectDir">选择路径</button>
-        </div>
+<!--        <div class="item-right item-right2">-->
+<!--            <button class="btn btn-success" id="selectDir">选择路径</button>-->
+<!--        </div>-->
     </div>
     <div class="item item2" id="tips" style="display: none">
         <p>下载中。。。</p>
@@ -182,7 +181,7 @@
     const $downDom = document.getElementById('downDom');
     const $source = document.getElementById('source');
     const $local = document.getElementById('download');
-    const $selectDir = document.getElementById('selectDir');
+    // const $selectDir = document.getElementById('selectDir');
     const $tips = document.getElementById('tips');
     const $preview = document.getElementById('preview');
     let isDownloading = false;
@@ -336,12 +335,12 @@
     }
 
 
-    $selectDir.addEventListener('click', () => {
-        ipc.send('showOpenDialog');
-        ipc.on('showOpenDialog-reply', function (event, arg) {
-            $local.value = arg;
-        });
-    });
+    // $selectDir.addEventListener('click', () => {
+    //     ipc.send('showOpenDialog');
+    //     ipc.on('showOpenDialog-reply', function (event, arg) {
+    //         $local.value = arg;
+    //     });
+    // });
 
 
     $btn.addEventListener('click', () => {
