@@ -51,7 +51,7 @@
             text-align: center;
         }
 
-        .item3{
+        .item3 {
             text-align: left;
             height: 100px;
             border: 1px solid #ccc;
@@ -135,7 +135,8 @@
             数据源：
         </div>
         <div class="item-right">
-            <input type="text" id="source" placeholder="请输入数据源地址">
+            <input type="text" id="source" placeholder="请输入数据源地址"
+                   value="rtmp://localhost:1935/rtmplive/room">
         </div>
     </div>
     <div class="item">
@@ -145,9 +146,9 @@
         <div class="item-right">
             <input type="text" id="download" placeholder="请选择数据存放地址">
         </div>
-<!--        <div class="item-right item-right2">-->
-<!--            <button class="btn btn-success" id="selectDir">选择路径</button>-->
-<!--        </div>-->
+        <div class="item-right item-right2">
+            <button class="btn btn-success" id="selectDir">选择路径</button>
+        </div>
     </div>
     <div class="item item2" id="tips" style="display: none">
         <p>下载中。。。</p>
@@ -159,7 +160,7 @@
         <button class="btn" id="btn">下载</button>
     </div>
     <div class="item item2" id="stopDom" style="display: none">
-        <button class="btn btn-danger" id="btn2">取消</button>
+        <button class="btn btn-danger" id="btn2">结束</button>
     </div>
     <div>
 
@@ -170,6 +171,7 @@
 <script>
     const spawn = require('child_process').spawn;
     const path = require('path');
+    const fs = require('fs');
     const os = require('os');
     const platform = os.platform();
     const ipc = require('electron').ipcRenderer;
@@ -180,15 +182,24 @@
     const $downDom = document.getElementById('downDom');
     const $source = document.getElementById('source');
     const $local = document.getElementById('download');
-    // const $selectDir = document.getElementById('selectDir');
+    const $selectDir = document.getElementById('selectDir');
     const $tips = document.getElementById('tips');
     const $preview = document.getElementById('preview');
     let isDownloading = false;
+    let ffmpegDir = isWin ? './resources/ffmpeg/win/ffmpeg.exe' : './ffmpeg/mac/ffmpeg';
+
 
     let shell = '';
     let previewHtml = '';
     let doSpawn;
     const homeDir = os.homedir();
+    let killMyself = false;
+    let local = '';
+    let source = '';
+    let localList = [];
+    let lastLocalName = '';
+    let increase = 0;
+
     // $local.value = homeDir;
 
     function uuid() {
@@ -211,10 +222,13 @@
                     $preview.innerText = data.toString();
                 });
                 doSpawn.on('exit', function (code, signal) {
-
+                    console.log('code:', code);
+                    console.log('signal:', signal);
+                    if (!killMyself) {
+                        tryDownload(true)
+                    }
+                    resolve();
                 });
-
-                resolve();
             } catch (e) {
                 reject();
             }
@@ -222,12 +236,112 @@
         });
     }
 
-    // $selectDir.addEventListener('click', () => {
-    //     ipc.send('showOpenDialog');
-    //     ipc.on('showOpenDialog-reply', function (event, arg) {
-    //         $local.value = arg;
-    //     });
-    // });
+    function tryDownload(concat) {
+        // let ffmpeg = path.join(__dirname, ffmpegDir);
+        let ffmpeg = ffmpegDir;
+
+        // 如果是继续下载的话。
+        let shellAry = [];
+        if (concat) {
+            let videoName = getNEWLocalVideoName();
+            localList.push(videoName);
+            //console.log('current localList:', localList);
+            // 从命名
+            if (fs.existsSync(local)) {
+                // 从命名原来的流。继续选择
+                fs.renameSync(local, videoName);
+            }
+        }
+        // 继续下载
+        shellAry = ['-i', source, '-acodec', 'copy', '-vcodec', 'copy', '-f', 'flv', '-y', local];
+        //console.log(shellAry);
+
+        if (shellAry.length > 0) {
+            doDownload();
+            doShell(ffmpeg, shellAry).then(() => {
+
+            }).catch((e) => {
+                stopDownload();
+                ipc.send('showErrorBox', '执行下载失败');
+            });
+        } else {
+
+        }
+    }
+
+
+    // 合并视频
+    function concatVideo() {
+        //console.log('start concat video');
+
+        if (localList.length > 0) {
+           // console.log('do connect video', localList);
+            // 把最后一个文件，修改文件名称，然后做最后的合并操作
+            if (fs.existsSync(local)) {
+                let videoName = getNEWLocalVideoName();
+                localList.push(videoName);
+                // 从命名原来的流。继续选择
+                fs.renameSync(local, videoName);
+            }
+
+            let ffmpeg = ffmpegDir;
+            let concat = 'concat:' + localList.join("|");
+
+            let shellAry = ['-i', concat, '-c', 'copy', local];
+           // console.log(shellAry);
+
+            doShell(ffmpeg, shellAry).then(() => {
+                // 如果合并ok 了 则删除掉。
+                if (fs.existsSync(local)) {
+                    removeLocalVideo();
+                    $preview.innerText = '结束！！！';
+                }
+            }).catch((e) => {
+                stopDownload();
+                ipc.send('showErrorBox', '执行合并失败');
+            });
+        }
+    }
+
+    // 删除剩余的视频。
+    function removeLocalVideo() {
+        //console.log('start remove local video');
+       // console.log('videoList:', localList);
+
+        localList.forEach((local) => {
+            //
+            if (fs.existsSync(local)) {
+                fs.unlinkSync(local);
+            }
+        });
+    }
+
+    function getVideoName() {
+        //
+        let array = lastLocalName.split(path.sep);
+        let len = array.length;
+        return array[len - 1]
+    }
+
+    //
+    function getNEWLocalVideoName() {
+        let oldName = getVideoName();
+        //console.log(`get old local name is ${oldName}`);
+        let temp = oldName.split('.');
+        let newName = temp[0] + '-copy.' + temp[1];
+        let local2 = lastLocalName.replace(oldName, newName);
+        lastLocalName = local2;
+        //console.log('current last local name', lastLocalName, local);
+        return local2;
+    }
+
+
+    $selectDir.addEventListener('click', () => {
+        ipc.send('showOpenDialog');
+        ipc.on('showOpenDialog-reply', function (event, arg) {
+            $local.value = arg;
+        });
+    });
 
 
     $btn.addEventListener('click', () => {
@@ -235,50 +349,57 @@
             return;
         }
 
-        let source = ($source.value || '').trim();
-        let local = ($local.value || '').trim();
+        let _source = ($source.value || '').trim();
+        let _local = ($local.value || '').trim();
 
-        if (!source) {
+        if (!_source) {
             ipc.send('showErrorBox', '数据源不能为空');
             return;
         }
 
-        if (!local) {
+        if (!_local) {
             ipc.send('showErrorBox', '存放地址不能为空');
             return;
         }
 
-        let ffmpegDir = isWin ? './resources/ffmpeg/win/ffmpeg.exe' : './ffmpeg/mac/ffmpeg';
+        if (_local.indexOf('.flv') === -1) {
+            ipc.send('showErrorBox', '存放地址错误，必须指定下载文件名(flv格式)');
+            return;
+        }
 
-        // let ffmpeg = path.join(__dirname, ffmpegDir);
-        let ffmpeg = ffmpegDir;
+        // add live=1
+        // if (_source.indexOf('live=') === -1) {
+        //     _source = _source + ' live=1';
+        // }
 
-        // shell = ' -i "' + source + '" -acodec copy -vcodec copy -f flv -y ' + local + path.sep + uuid() + '.flv';
+        source = _source;
+        local = _local;
+        lastLocalName = _local;
 
-        let shellAry = ['-i', source + ' live=1', '-acodec', 'copy', '-vcodec', 'copy', '-f', 'flv', '-y', local];
-
-        doDownload();
-        doShell(ffmpeg, shellAry).then(() => {
-
-        }).catch((e) => {
-            stopDownload();
-            ipc.send('showErrorBox', '执行下载失败');
-        });
+        if (fs.existsSync(local)) {
+            if (confirm('文件已经存在，是否覆盖该文件')) {
+                tryDownload();
+            }
+        } else {
+            tryDownload();
+        }
     });
 
     $btn2.addEventListener('click', () => {
         if (isDownloading) {
+            stopDownload();
             try {
                 doSpawn && doSpawn.kill && doSpawn.kill();
             } catch (e) {
                 console.error(e);
             }
-            stopDownload();
+            concatVideo();
         }
     });
 
     function doDownload() {
         isDownloading = true;
+        killMyself = false;
         $downDom.style.display = 'none';
         $stopDom.style.display = 'block';
         $tips.style.display = 'block';
@@ -287,10 +408,11 @@
 
     function stopDownload() {
         isDownloading = false;
+        killMyself = true;
         $downDom.style.display = 'block';
         $stopDom.style.display = 'none';
         $tips.style.display = 'none';
-        $preview.style.display = 'none';
+        // $preview.style.display = 'none';
     }
 
 </script>
