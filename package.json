@@ -4,7 +4,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
-    "package:win": "electron-packager ./ --extra-resource=ffmpeg/",
+    "package:win": "electron-packager ./",
     "package:mac": "electron-packager ./ --platform=darwin --arch=x64 --icon=app.icns --out=./dist --asar --app-version=1.0.0"
   },
   "build": {
