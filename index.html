@@ -146,7 +146,7 @@
             <input type="text" id="download" placeholder="请选择数据存放地址">
         </div>
         <div class="item-right item-right2">
-<!--            <button class="btn btn-success" id="selectDir">选择路径</button>-->
+            <button class="btn btn-success" id="selectDir">选择路径</button>
         </div>
     </div>
     <div class="item item2" id="tips" style="display: none">
@@ -181,7 +181,7 @@
     const $downDom = document.getElementById('downDom');
     const $source = document.getElementById('source');
     const $local = document.getElementById('download');
-    // const $selectDir = document.getElementById('selectDir');
+    const $selectDir = document.getElementById('selectDir');
     const $tips = document.getElementById('tips');
     const $preview = document.getElementById('preview');
     let isDownloading = false;
@@ -199,7 +199,7 @@
     let lastLocalName = '';
     let increase = 0;
 
-    // $local.value = homeDir;
+    $local.value = homeDir;
 
     function uuid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -236,22 +236,12 @@
     }
 
     function tryDownload(concat) {
-        // let ffmpeg = path.join(__dirname, ffmpegDir);
         let ffmpeg = ffmpegDir;
         let _local = local;
 
         // 如果是继续下载的话。
         let shellAry = [];
         if (concat) {
-            // let videoName = getNEWLocalVideoName();
-            // localList.push(videoName);
-            //console.log('current localList:', localList);
-            // 从命名
-            // if (fs.existsSync(local)) {
-            //     // 从命名原来的流。继续选择
-            //     fs.renameSync(local, videoName);
-            // }
-            //     从新下载新的文件。
             _local = getIncreaseVideoName();
         }
         // 继续下载
@@ -307,9 +297,6 @@
 
     // 删除剩余的视频。
     function removeLocalVideo() {
-        //console.log('start remove local video');
-        // console.log('videoList:', localList);
-
         localList.forEach((local) => {
             //
             if (fs.existsSync(local)) {
@@ -328,7 +315,6 @@
     //
     function getNEWLocalVideoName() {
         let oldName = getVideoName();
-        //console.log(`get old local name is ${oldName}`);
         let temp = oldName.split('.');
         let newName = temp[0] + '-copy.' + temp[1];
         let local2 = lastLocalName.replace(oldName, newName);
@@ -350,12 +336,12 @@
     }
 
 
-    // $selectDir.addEventListener('click', () => {
-    //     ipc.send('showOpenDialog');
-    //     ipc.on('showOpenDialog-reply', function (event, arg) {
-    //         $local.value = arg;
-    //     });
-    // });
+    $selectDir.addEventListener('click', () => {
+        ipc.send('showOpenDialog');
+        ipc.on('showOpenDialog-reply', function (event, arg) {
+            $local.value = arg;
+        });
+    });
 
 
     $btn.addEventListener('click', () => {
@@ -382,9 +368,9 @@
         }
 
         // add live=1
-        // if (_source.indexOf('live=') === -1) {
-        //     _source = _source + ' live=1';
-        // }
+        if (_source.indexOf('live=') === -1) {
+            _source = _source + ' live=1';
+        }
 
         source = _source;
         local = _local;

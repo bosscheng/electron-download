@@ -2,10 +2,10 @@
   "name": "download",
   "version": "1.0.0",
   "main": "main.js",
+  "description": "electron download by ffmpeg",
   "scripts": {
     "dev": "electron .",
-    "package:win": "electron-packager ./",
-    "package:mac": "electron-packager ./ --platform=darwin --arch=x64 --icon=app.icns --out=./dist --asar --app-version=1.0.0"
+    "package": "electron-packager ./"
   },
   "build": {
     "appId": "Download",
