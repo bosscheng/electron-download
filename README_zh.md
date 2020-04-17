@@ -48,3 +48,7 @@ ffmpeg -re -i [你的视频文件的绝对路径] -vcodec copy -f flv rtmp://loc
 ```
 
 然后使用客户端下载流。
+
+# 截图
+
+<img src="./image/1.png"></img>

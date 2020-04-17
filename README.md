@@ -42,3 +42,7 @@ push stream
 ```
 ffmpeg -re -i [absolute dir] -vcodec copy -f flv rtmp://localhost:1935/abcs/room
 ```
+
+# screenshot
+
+<img src="./image/1.png"></img>
