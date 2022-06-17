@@ -27,7 +27,7 @@
   "dependencies": {},
   "devDependencies": {
     "cross-env": "^5.2.0",
-    "electron": "^5.0.3",
+    "electron": "^15.5.5",
     "electron-builder": "^20.43.0",
     "electron-packager": "^13.1.1"
   }
